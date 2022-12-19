@@ -1,0 +1,5 @@
+Resources:
+  opBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:custom.OP_BUCKET}

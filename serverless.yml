@@ -1,0 +1,37 @@
+service: file-importer-op
+app: file-importer-op
+frameworkVersion: "3"
+
+plugins:
+  - serverless-iam-roles-per-function
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+functions:
+  importBucket:
+    handler: src/importBucket.import
+    environment:
+      OP_BUCKET_NAME: ${self:custom.OP_BUCKET}
+      IMPORT_TABLE_NAME: ${self:custom.IMPORT_TABLE_NAME}
+    iamRoleStatementsName: lambda-import-role
+    iamRoleStatements:
+      - Effect: "Allow"        
+        Action:
+          - s3:GetObject        
+        Resource: "arn:aws:s3:::${self:custom.OP_BUCKET}/*" 
+    events:
+      - s3:
+          bucket: ${self:custom.OP_BUCKET}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .csv
+          existing: true  
+resources:
+  - ${file(resources/importTable.yml)}
+  - ${file(resources/s3Bucket.yml)}
+
+custom:
+  IMPORT_TABLE_NAME: import-table-${self:provider.stage}
+  OP_BUCKET: op-bucket-${self:provider.stage}
